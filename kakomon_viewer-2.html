@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>企業経営理論 JSON ビューア</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(18, 24, 46, 0.84);
+      --panel-2: rgba(255,255,255,0.06);
+      --text: #eef2ff;
+      --muted: #a7b0d6;
+      --line: rgba(255,255,255,0.12);
+      --accent: #6ea8fe;
+      --accent-2: #7ef0c8;
+      --warn: #ffca6b;
+      --danger: #ff8e8e;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: radial-gradient(circle at top right, #172554 0%, #0b1020 45%, #050814 100%); color: var(--text); font-family: Inter, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+    a { color: #9fd0ff; }
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 24px; }
+    .hero { display: grid; gap: 16px; grid-template-columns: 1.2fr .8fr; align-items: stretch; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+    .hero-main { padding: 26px; }
+    .hero-side { padding: 22px; display: grid; gap: 12px; }
+    .title { font-size: clamp(28px, 5vw, 42px); font-weight: 800; line-height: 1.1; margin: 0 0 8px; letter-spacing: .01em; }
+    .subtitle { color: var(--muted); line-height: 1.7; margin: 0; }
+    .badge-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+    .badge { padding:8px 12px; border-radius:999px; background: rgba(126,240,200,.12); border:1px solid rgba(126,240,200,.25); color:#dffef4; font-size:13px; }
+    .stats { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; }
+    .stat { padding: 18px; background: var(--panel-2); border-radius: 16px; border: 1px solid var(--line); }
+    .stat .k { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .stat .v { font-size: 28px; font-weight: 800; }
+    .side-note { padding: 14px 16px; border-radius: 14px; border:1px solid var(--line); background: rgba(255,255,255,.04); }
+    .side-note h3 { margin:0 0 8px; font-size:14px; color:#dfe8ff; }
+    .side-note p, .side-note li { margin:0; color:var(--muted); line-height:1.7; font-size:13px; }
+    .side-note ul { margin: 0; padding-left: 18px; }
+    .toolbar { margin-top: 20px; padding: 18px; display:grid; gap: 14px; }
+    .toolbar-grid { display:grid; grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .toolbar-row { display:flex; flex-wrap:wrap; gap: 10px; align-items: center; }
+    .field { display:grid; gap:6px; }
+    .field label { font-size: 12px; color: var(--muted); }
+    input[type="text"], select { width: 100%; background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none; }
+    input::placeholder { color: #9ca8d4; }
+    button { appearance:none; border:none; border-radius: 12px; padding: 12px 16px; color:#fff; cursor:pointer; background: linear-gradient(135deg, #3b82f6, #2563eb); font-weight: 700; box-shadow: 0 10px 24px rgba(37,99,235,.28); }
+    button.secondary { background: rgba(255,255,255,.08); border: 1px solid var(--line); box-shadow: none; color: var(--text); }
+    .table-wrap { margin-top: 20px; overflow: hidden; }
+    .table-header { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:18px 20px; border-bottom: 1px solid var(--line); }
+    .table-header h2 { margin:0; font-size: 18px; }
+    .table-sub { color: var(--muted); font-size: 13px; }
+    .table-scroll { overflow:auto; max-height: 68vh; }
+    table { width: 100%; border-collapse: collapse; min-width: 1180px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { position: sticky; top: 0; z-index: 1; background: rgba(14,20,40,.96); text-align: left; font-size: 12px; color: #b6c2ea; letter-spacing: .04em; }
+    tbody tr:hover { background: rgba(255,255,255,.04); }
+    .pill { display:inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.05); }
+    .ok { color:#dffef4; border-color: rgba(126,240,200,.35); background: rgba(126,240,200,.12); }
+    .ng { color:#ffe5e5; border-color: rgba(255,142,142,.35); background: rgba(255,142,142,.12); }
+    .muted { color: var(--muted); }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; text-align:center; }
+    .mini { font-size:12px; color:var(--muted); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .chips .chip { padding:8px 10px; border-radius:999px; background: rgba(255,255,255,.06); border:1px solid var(--line); font-size:12px; color:#d8e2ff; }
+    @media (max-width: 1100px) {
+      .hero { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .wrap { padding: 16px; }
+      .stats, .toolbar-grid { grid-template-columns: 1fr; }
+      .table-header { align-items:flex-start; flex-direction:column; }
+    }
+
+    /* 科目タブ */
+    .subject-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 0; }
+    .tab-btn { appearance:none; border:1px solid var(--line); border-radius:12px; padding:10px 18px;
+      color:var(--muted); cursor:pointer; background: rgba(255,255,255,.05); font-size:13px;
+      font-weight:600; transition: all .18s; white-space:nowrap; }
+    .tab-btn:hover { background: rgba(255,255,255,.1); color:var(--text); }
+    .tab-btn.active { background: linear-gradient(135deg,#3b82f6,#2563eb);
+      color:#fff; border-color:transparent; box-shadow:0 8px 20px rgba(37,99,235,.3); }
+    .loading-overlay { display:none; align-items:center; justify-content:center;
+      gap:10px; padding:12px; color:var(--muted); font-size:13px; }
+    .spinner { width:16px; height:16px; border:2px solid var(--line);
+      border-top-color:#6ea8fe; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="panel hero-main">
+        <div class="pill ok">中小企業診断士 1次試験 / 過去問 JSON Viewer</div>
+        <h1 class="title">5科目の過去問と<br>解説URLを検索・閲覧</h1>
+        <p class="subtitle">JSONを読み込んで、<strong>年度・SHEET・テーマ・キーワード</strong>で絞り込みできます。解説URLがある問題だけを見ることも、未対応だけを洗い出すこともできます。</p>
+        <div class="badge-row">
+          <div class="badge">検索・フィルタ・件数集計</div>
+          <div class="badge">CSVエクスポート</div>
+        </div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <aside class="panel hero-side">
+        <div class="side-note">
+          <h3>使い方</h3>
+          <ul>
+            <li>そのまま開くと、今回作成したJSONを自動で表示します。</li>
+            <li>別JSONを使う場合は、URL入力かローカルファイル選択を使えます。</li>
+            <li>「未対応のみ」で、解説URL未取得の問題だけ確認できます。</li>
+          </ul>
+        </div>
+        <div class="side-note">
+          <h3>読み込み方法</h3>
+          <p class="mini">科目タブをクリックすると、同じディレクトリの対応JSONを自動で読み込みます。</p>
+        </div>
+        <div class="side-note">
+          <h3>収録項目</h3>
+          <div class="chips" id="fieldChips"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel toolbar" style="padding:18px;">
+      <div style="margin-bottom:4px; font-size:12px; color:var(--muted);">科目を選択</div>
+      <div class="subject-tabs" id="subjectTabs">
+        <button class="tab-btn active" data-subject="keiei" data-label="企業経営理論">📘 企業経営理論</button>
+        <button class="tab-btn" data-subject="unei" data-label="運営管理">🏭 運営管理</button>
+        <button class="tab-btn" data-subject="zaimu" data-label="財務会計">💰 財務会計</button>
+        <button class="tab-btn" data-subject="keizai" data-label="経済学・経済政策">📈 経済学</button>
+        <button class="tab-btn" data-subject="houmu" data-label="経営法務">⚖️ 経営法務</button>
+      </div>
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div><span id="loadingText">読み込み中...</span>
+      </div>
+    </section>
+
+    <section class="panel toolbar">
+      <div class="toolbar-grid">
+        <div class="field">
+          <label>フリーワード</label>
+          <input id="searchInput" type="text" placeholder="例: R6 / 第29問 / ブランド / 組織" />
+        </div>
+        <div class="field">
+          <label>年度</label>
+          <select id="yearFilter"></select>
+        </div>
+        <div class="field">
+          <label>SHEET</label>
+          <select id="sheetFilter"></select>
+        </div>
+        <div class="field">
+          <label>テーマ</label>
+          <select id="topicFilter"></select>
+        </div>
+      </div>
+      <div class="toolbar-row">
+        <button class="secondary" id="useEmbeddedBtn">現在の科目を再読込</button>
+        <button class="secondary" id="downloadCsvBtn">表示中をCSV保存</button>
+        <label style="display:inline-flex;align-items:center;gap:8px;margin-left:auto;" class="mini">
+          <input id="matchedOnly" type="checkbox">
+          解説URLありのみ
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:8px;" class="mini">
+          <input id="unmatchedOnly" type="checkbox">
+          未対応のみ
+        </label>
+      </div>
+      <div class="mini" id="status">初期化中...</div>
+    </section>
+
+    <section class="panel table-wrap">
+      <div class="table-header">
+        <div>
+          <h2>問題一覧</h2>
+          <div class="table-sub" id="resultMeta">-</div>
+        </div>
+        <div class="mini" id="summaryMeta">-</div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>SHEET</th>
+              <th>シート名</th>
+              <th>テーマ</th>
+              <th>年度</th>
+              <th>問題</th>
+              <th>PDFページ</th>
+              <th>URL状態</th>
+              <th>解説URL</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="footer">
+      データソース: <a href="https://www.matome-sheet.com/kakomonkaisetu/" target="_blank" rel="noopener">matome-sheet.com</a>
+    </div>
+  </div>
+
+  <script>
+    
+    // 科目ごとのJSON設定
+    const SUBJECT_MAP = {
+      keiei: { file: 'keiei_problems.json', label: '企業経営理論', source: 'https://www.matome-sheet.com/kakomon-keiei/' },
+      unei:  { file: 'unei_problems.json',  label: '運営管理',     source: 'https://www.matome-sheet.com/kakomon-unei/' },
+      zaimu: { file: 'zaimu_problems.json', label: '財務会計',     source: 'https://www.matome-sheet.com/kakomon-zaimu/' },
+      keizai:{ file: 'keizai_problems.json',label: '経済学・経済政策', source: 'https://www.matome-sheet.com/kakomon-keizai/' },
+      houmu: { file: 'houmu_problems.json', label: '経営法務',     source: 'https://www.matome-sheet.com/kakomon-houmu/' },
+    };
+    let currentSubject = 'keiei';
+
+    let currentData = { items: [], summary: {} };
+    let filteredItems = [];
+
+    const els = {
+      stats: document.getElementById('stats'),
+      fieldChips: document.getElementById('fieldChips'),
+      searchInput: document.getElementById('searchInput'),
+      yearFilter: document.getElementById('yearFilter'),
+      sheetFilter: document.getElementById('sheetFilter'),
+      topicFilter: document.getElementById('topicFilter'),
+      matchedOnly: document.getElementById('matchedOnly'),
+      unmatchedOnly: document.getElementById('unmatchedOnly'),
+      tbody: document.getElementById('tbody'),
+      resultMeta: document.getElementById('resultMeta'),
+      summaryMeta: document.getElementById('summaryMeta'),
+      status: document.getElementById('status'),
+      useEmbeddedBtn: document.getElementById('useEmbeddedBtn'),
+      downloadCsvBtn: document.getElementById('downloadCsvBtn'),
+      subjectTabs: document.getElementById('subjectTabs'),
+      loadingOverlay: document.getElementById('loadingOverlay'),
+      loadingText: document.getElementById('loadingText'),
+    };
+
+    const FIELD_NAMES = ['sheet', 'sheet_title', 'topic', 'year', 'question_label', 'page', 'explanation_url', 'source_page_url'];
+
+    function setStatus(message, isError = false) {
+      els.status.textContent = message;
+      els.status.style.color = isError ? '#ffb4b4' : 'var(--muted)';
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function populateSelect(el, values, allLabel) {
+      const current = el.value;
+      el.innerHTML = '';
+      const opts = [''].concat(values.filter(Boolean));
+      for (const value of opts) {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value || allLabel;
+        el.appendChild(opt);
+      }
+      if ([...el.options].some(o => o.value === current)) el.value = current;
+    }
+
+    function uniqueSorted(arr) {
+      return [...new Set(arr.filter(v => v !== null && v !== undefined && String(v).trim() !== ''))].sort((a,b) => String(a).localeCompare(String(b), 'ja'));
+    }
+
+    function renderStats(data, visibleItems) {
+      const summary = data.summary || {};
+      const total = (data.items || []).length;
+      const matched = (data.items || []).filter(x => !!x.explanation_url).length;
+      const unmatched = total - matched;
+      const visibleMatched = visibleItems.filter(x => !!x.explanation_url).length;
+      const cards = [
+        ['総問題数', total],
+        ['URL対応', matched],
+        ['未対応', unmatched],
+        ['現在表示', visibleItems.length],
+      ];
+      els.stats.innerHTML = cards.map(([k,v]) => `
+        <div class="stat">
+          <div class="k">${escapeHtml(k)}</div>
+          <div class="v">${escapeHtml(v)}</div>
+        </div>
+      `).join('');
+      els.summaryMeta.textContent = `PDF ${summary.pdf_pages ?? '-'}ページ / Web links ${summary.web_links_parsed ?? '-'} / 表示中URL対応 ${visibleMatched}件`;
+    }
+
+    function renderFieldChips() {
+      els.fieldChips.innerHTML = FIELD_NAMES.map(x => `<span class="chip">${escapeHtml(x)}</span>`).join('');
+    }
+
+    function updateFiltersFromData() {
+      const items = currentData.items || [];
+      populateSelect(els.yearFilter, uniqueSorted(items.map(x => x.year)), 'すべての年度');
+      populateSelect(els.sheetFilter, uniqueSorted(items.map(x => x.sheet)), 'すべてのSHEET');
+      populateSelect(els.topicFilter, uniqueSorted(items.map(x => x.topic)), 'すべてのテーマ');
+    }
+
+    function applyFilters() {
+      const items = currentData.items || [];
+      const q = els.searchInput.value.trim().toLowerCase();
+      const year = els.yearFilter.value;
+      const sheet = els.sheetFilter.value;
+      const topic = els.topicFilter.value;
+      const matchedOnly = els.matchedOnly.checked;
+      const unmatchedOnly = els.unmatchedOnly.checked;
+
+      filteredItems = items.filter(item => {
+        if (year && item.year !== year) return false;
+        if (sheet && item.sheet !== sheet) return false;
+        if (topic && item.topic !== topic) return false;
+        if (matchedOnly && !item.explanation_url) return false;
+        if (unmatchedOnly && !!item.explanation_url) return false;
+        if (q) {
+          const hay = [item.sheet, item.sheet_title, item.topic, item.year, item.question_label, item.page, item.explanation_url].join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      renderTable();
+      renderStats(currentData, filteredItems);
+      els.resultMeta.textContent = `${filteredItems.length}件表示 / 全${items.length}件`;
+    }
+
+    function renderTable() {
+      if (!filteredItems.length) {
+        els.tbody.innerHTML = `<tr><td colspan="9" class="muted">該当データがありません。</td></tr>`;
+        return;
+      }
+      els.tbody.innerHTML = filteredItems.map((item, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td><span class="pill">${escapeHtml(item.sheet || '-')}</span></td>
+          <td>${escapeHtml(item.sheet_title || '-')}</td>
+          <td>${escapeHtml(item.topic || '-')}</td>
+          <td>${escapeHtml(item.year || '-')}</td>
+          <td><strong>${escapeHtml(item.question_label || '-')}</strong></td>
+          <td>${escapeHtml(item.page ?? '-')}</td>
+          <td>${item.explanation_url ? '<span class="pill ok">対応済み</span>' : '<span class="pill ng">未対応</span>'}</td>
+          <td>${item.explanation_url ? `<a href="${item.explanation_url}" target="_blank" rel="noopener">解説を開く</a>` : '<span class="muted">なし</span>'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function hydrate(data, sourceLabel='読み込み完了') {
+      if (!data || !Array.isArray(data.items)) {
+        throw new Error('items 配列を含むJSONではありません');
+      }
+      currentData = data;
+      updateFiltersFromData();
+      applyFilters();
+      setStatus(`${sourceLabel}: ${data.items.length}件`);
+    }
+
+    function exportCsv() {
+      const rows = filteredItems.map(item => [
+        item.sheet || '',
+        item.sheet_title || '',
+        item.topic || '',
+        item.year || '',
+        item.question_label || '',
+        item.page ?? '',
+        item.explanation_url || '',
+        item.source_page_url || '',
+      ]);
+      const csv = [
+        ['sheet','sheet_title','topic','year','question_label','page','explanation_url','source_page_url'],
+        ...rows,
+      ].map(row => row.map(cell => `"${String(cell).replaceAll('"','""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'keiei_filtered.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    els.useEmbeddedBtn.addEventListener('click', () => loadSubject(currentSubject));
+    els.downloadCsvBtn.addEventListener('click', exportCsv);
+    els.searchInput.addEventListener('input', applyFilters);
+    els.yearFilter.addEventListener('change', applyFilters);
+    els.sheetFilter.addEventListener('change', applyFilters);
+    els.topicFilter.addEventListener('change', applyFilters);
+    els.matchedOnly.addEventListener('change', () => { if (els.matchedOnly.checked) els.unmatchedOnly.checked = false; applyFilters(); });
+    els.unmatchedOnly.addEventListener('change', () => { if (els.unmatchedOnly.checked) els.matchedOnly.checked = false; applyFilters(); });
+
+    renderFieldChips();
+
+    // 科目タブ切り替え
+    async function loadSubject(subject) {
+      currentSubject = subject;
+      // タブのactive切り替え
+      els.subjectTabs.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.subject === subject);
+      });
+      const cfg = SUBJECT_MAP[subject];
+      // ローディング表示
+      els.loadingOverlay.style.display = 'flex';
+      els.loadingText.textContent = `${cfg.label} を読み込み中...`;
+      setStatus(`${cfg.label} を読み込み中...`);
+      try {
+        const res = await fetch(cfg.file);
+        if (!res.ok) throw new Error(`HTTP ${res.status} — ${cfg.file} が見つかりません`);
+        const data = await res.json();
+        hydrate(data, `${cfg.label} 読み込み完了`);
+        // footer source更新
+        document.querySelector('.footer a').href = cfg.source;
+        document.querySelector('.footer a').textContent = cfg.source.replace('https://', '');
+      } catch (err) {
+        console.error(err);
+        setStatus(`読み込み失敗: ${err.message}`, true);
+        hydrate({ items: [], summary: {} }, 'データなし');
+      } finally {
+        els.loadingOverlay.style.display = 'none';
+      }
+    }
+
+    els.subjectTabs.addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (btn) loadSubject(btn.dataset.subject);
+    });
+
+    loadSubject('keiei');
+  </script>
+</body>
+</html>
